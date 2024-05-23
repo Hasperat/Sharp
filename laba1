@@ -1,0 +1,248 @@
+class Program
+{
+    #region main
+    static void Main(string[] args)
+    {
+        //переменная для выбора действия
+        int choose = 0;
+        //присваиваем переменным возвращаемые из методов значения
+        var rezerv = Getrezerv();
+        var ustan = Getustan();
+        var fabric = Getfabric();
+        Console.WriteLine($"Количество резервуаров: {rezerv.Length}, установок: {ustan.Length}");
+
+        Console.WriteLine("Список действий");
+        Console.WriteLine("1. Найти фабрику соответствующую установке");
+        Console.WriteLine("2. Найти установку по имени принадлежащего ей резервуара");
+        Console.WriteLine("3. Вычислить суммарный объём резервуаров в массиве");
+        Console.Write("Выберите действие: ");
+
+        //ввод пользователя с проверкой
+        if (!int.TryParse(Console.ReadLine(), out choose))
+        {
+            Console.WriteLine("Значение должно быть числом");
+            return;
+        }
+
+        try
+        {
+            switch (choose)
+            {
+                // Находим фабрику по установке
+                case 1:
+                    try
+                    {
+                        var foundFactory = FindFactory(fabric, ustan[0]);
+                        Console.WriteLine("Фабрика найдена: " + foundFactory.Name);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        Console.WriteLine("Индекс вышел за пределы массива 'ustan'");
+                    }
+                    break;
+                // Находим принадлежность резервуара установке и заводу
+                case 2:
+
+                    var foundUstan = FindUstan(ustan, rezerv, "Резервуар 2");
+                    var factory = FindFactory(fabric, foundUstan);
+                    Console.WriteLine($"Резервуар 2 принадлежит установке {foundUstan.Name} и заводу {factory.Name}");
+                    break;
+                // Находи общий объём резервуаров в массиве
+                case 3:
+                    var totalVolume = GetTotalVolume(rezerv);
+                    Console.WriteLine($"Общий объем резервуаров: {totalVolume}");
+                    break;
+                default:
+                    Console.WriteLine("Неверный выбор");
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+    #endregion
+    #region Методы, возвращающие массивы данных
+    /// <summary>
+    /// Метод, возвращающий массив резервуаров, установленный согласно приложенным таблицам
+    /// </summary>
+    public static Rezerv[] Getrezerv()
+    {
+        //Создаём массив экземпляров класса Rezerv
+        Rezerv[] rezervArray =
+        [
+            new Rezerv(1, "Резервуар 1", "Надземный-вертикальный", 1500, 2000, 1),
+            new Rezerv(2, "Резервуар 2", "Надземный-горизонтальный", 2500, 3000, 1),
+            new Rezerv(3, "Дополнительный резервуар 24", "Надземный-горизонтальный", 3000, 3000, 2),
+            new Rezerv(4, "Резервуар 35", "Надземный-вертикальный", 3000, 3000, 2),
+            new Rezerv(5, "Резервуар 47", "Подземный-двустенный", 4000, 5000, 2),
+            new Rezerv(6, "Резервуар 256", "Подводный", 500, 500, 3)
+        ];
+
+        return rezervArray;
+    }
+    /// <summary>
+    /// Метод, возвращающий массив установок, установленный согласно приложенным таблицам
+    /// </summary>
+    public static Ustan[] Getustan()
+    {
+        // Создаем массив экземпляров класса Ustan
+        Ustan[] ustanArray =
+        [
+            new Ustan(1, "ГФУ-2", "Газофракционирующая установка", 1),
+            new Ustan(2, "АВТ-6", "Атмосферно-вакуумная трубчатка", 1),
+            new Ustan(3, "АВТ-10", "Атмосферно-вакуумная трубчатка", 2)
+        ];
+        // Возвращаем массив данных
+        return ustanArray;
+    }
+
+    /// <summary>
+    /// Метод, возвращающий массив заводов, установленный согласно приложенным таблицам
+    /// </summary>
+    public static Factory[] Getfabric()
+    {
+        // Создаем массив экземпляров класса Factory
+        Factory[] fabricList =
+            [
+                new Factory(1, "НПЗ№1", "Первый нефтеперерабатывающий завод"),
+                new Factory(2, "НПЗ№2", "Второй нефтеперерабатывающий завод")
+            ];
+        // Возвращаем массив данных
+        return fabricList;
+    }
+    #endregion
+    #region Методы поиска данных в массивах данных
+
+    /// <summary>
+    /// Метод, возвращающий установку (Ustan), которой
+    /// принадлежит резервуар (Rezerv), найденный в массиве резервуаров по имени
+    /// </summary>
+    public static Ustan FindUstan(Ustan[] ustan, Rezerv[] rezerv, string UstanName)
+    {
+        int? foundedRezervID = null;
+        // Проходим по массиву резервуаров
+        foreach (Rezerv Rezerv in rezerv)
+        {
+            // Если находим резервуар по имени, то запоминаем его UstanID и выходим из цикла
+            if (UstanName == Rezerv.Name)
+            {
+                foundedRezervID = Rezerv.UstanId;
+                break;
+            }
+        }
+        // Проверяем найден ли резервуар, если найден, то проходим по массиву установок
+        // если находим подходящую, то возвращаем её, иначе вызываем исключение
+        if (foundedRezervID != null)
+        {
+            foreach (Ustan Ustan in ustan)
+            {
+                if (foundedRezervID == Ustan.Id)
+                {
+                    return Ustan;
+                }
+            }
+        }
+        throw new Exception($"Фабрика не была найдена для установки '{UstanName}'");
+    }
+
+    /// <summary>
+    /// Метод, возвращающий экземпляр завода, соответствующий установке
+    /// </summary>
+    public static Factory FindFactory(Factory[] fabric, Ustan Ustan)
+    {
+        foreach (Factory factory in fabric)
+        {
+            if (Ustan.FactoryId == factory.Id)
+            {
+                return factory;
+            }
+        }
+
+        // Если ни один завод не соответствует условиям, выбросим исключение
+        throw new Exception("Фабрика не была найдена для заданной установки");
+    }
+
+    /// <summary>
+    /// Метод, возвращающий суммарный объем резервуаров в массиве
+    /// </summary>
+    public static int GetTotalVolume(Rezerv[] ustan)
+    {
+        int totalVolume = 0;
+
+        foreach (Rezerv Rezerv in ustan)
+        {
+            totalVolume += Rezerv.Volume;
+        }
+        return totalVolume;
+    }
+    #endregion
+}
+#region Классы, описывающие таблицы
+/// <summary>
+/// Установка
+/// </summary>
+public class Ustan
+{
+    // Свойства класса
+    public int Id { get; }
+    public string Name { get; }
+    public string Description { get; }
+    public int FactoryId { get; }
+
+    // Конструктор с параметрами
+    public Ustan(int id, string name, string description, int factoryId)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+        FactoryId = factoryId;
+    }
+}
+
+/// <summary>
+/// Завод
+/// </summary>
+public class Factory
+{
+    // Свойства класса
+    public int Id { get; }
+    public string Name { get; }
+    public string Description { get; }
+
+    // Конструктор с параметрами
+    public Factory(int id, string name, string description)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+    }
+
+}
+
+/// <summary>
+/// Резервуар
+/// </summary>
+public class Rezerv
+{
+    // Свойства класса
+    public int Id { get; }
+    public string Name { get; }
+    public string Description { get; }
+    public int Volume { get; }
+    public int MaxVolume { get; }
+    public int UstanId { get; }
+
+    // Конструктор с параметрами
+    public Rezerv(int id, string name, string description, int volume, int maxVolume, int UstanId)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+        Volume = volume;
+        MaxVolume = maxVolume;
+        UstanId = UstanId;
+    }
+}
+#endregion
